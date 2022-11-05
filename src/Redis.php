@@ -1,4 +1,15 @@
 <?php
+/**
+ * InitPHP/Redis
+ *
+ * This file is part of InitPHP Redis.
+ *
+ * @author Muhammet ŞAFAK <info@muhammetsafak.com.tr>
+ * @copyright Copyright © 2022 Muhammet ŞAFAK
+ * @license ./LICENSE MIT
+ * @version 1.0
+ * @link https://www.muhammetsafak.com.tr
+ */
 
 namespace InitPHP\Redis;
 
@@ -13,8 +24,9 @@ use function array_merge;
 
 class Redis
 {
+
     protected array $_Options = [
-        'prefix'        => 'cache_',
+        'prefix'        => 'i_',
         'host'          => '127.0.0.1',
         'password'      => null,
         'port'          => 6379,
@@ -27,7 +39,7 @@ class Redis
     public function __construct(array $options = [])
     {
         if(!extension_loaded('redis')){
-            throw new \RuntimeException();
+            throw new \RuntimeException("The process has been terminated because the PHP Redis extension is not installed or enabled on your server.");
         }
         $this->_Options = array_merge($this->_Options, $options);
     }
@@ -42,7 +54,7 @@ class Redis
     /**
      * @return \Redis
      */
-    public function getRedis(): \Redis
+    public final function getRedis(): \Redis
     {
         if(isset($this->redis)){
             return $this->redis;
@@ -81,8 +93,8 @@ class Redis
         $this->validationName($name);
         if(($data = $this->getRedis()->get($name)) !== FALSE){
             $data = unserialize($data);
-            if(isset($data['__cache_type'], $data['__cache_value'])){
-                return $data['__cache_value'];
+            if(isset($data['__type'], $data['__value'])){
+                return $data['__value'];
             }
         }
         return $this->reDefault($default);
@@ -116,7 +128,7 @@ class Redis
             default:
                 return false;
         }
-        if(!($this->getRedis()->set($name, serialize(['__cache_type' => $type, '__cache_value' => $value])))){
+        if(!($this->getRedis()->set($name, serialize(['__type' => $type, '__value' => $value])))){
             return false;
         }
         if($ttl !== null){
